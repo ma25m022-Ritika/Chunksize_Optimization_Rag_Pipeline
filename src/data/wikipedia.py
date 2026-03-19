@@ -1,9 +1,10 @@
+
 import os
 import tqdm
 import json
 import regex as re
 from datasets import load_dataset
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def ends_with_ending_punctuation(s):
@@ -20,76 +21,72 @@ def concat(title, content):
 
 if __name__ == "__main__":
 
-    # Load Wikipedia dataset from HuggingFace
+
+    MAX_ARTICLES = 20000
+
     dat = load_dataset(
         "wikipedia",
         "20220301.en",
-        cache_dir="./corpus/wikipedia",
-        trust_remote_code=True
+        split="train",
+        streaming=True
     )
 
-    # Chunking strategy
+    # Chunking config
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200
     )
 
     # Output directory
-    chunk_dir = "corpus/wikipedia/chunk"
+    output_dir = "corpus/wikipedia/chunk"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    if not os.path.exists(chunk_dir):
-        os.makedirs(chunk_dir)
-
-    batch_size = 10000
-    len_just = len(str(len(dat['train']) // batch_size + 1))
+    batch_size = 2000
+    len_just = 5  # fixed padding since length is unknown in streaming
 
     saved_text = []
 
-    for i in tqdm.tqdm(range(len(dat['train'])), desc="Processing Wikipedia articles"):
+    for i, article in enumerate(tqdm.tqdm(dat, total=MAX_ARTICLES)):
+
+        # STOP after required articles
+        if i >= MAX_ARTICLES:
+            break
 
         save_id = i // batch_size
 
-        out_path = f"{chunk_dir}/wiki20220301en{str(save_id).rjust(len_just,'0')}.jsonl"
+        texts = text_splitter.split_text(article['text'].strip())
 
-        if os.path.exists(out_path):
-            continue
-
-        article = dat['train'][i]
-
-        title = article['title']
-        article_id = article['id']
-        text = article['text'].strip()
-
-        # Split article into chunks
-        texts = text_splitter.split_text(text)
-
-        curr_text = []
-
-        for j, t in enumerate(texts):
-
-            t = re.sub("\s+", " ", t)
-
-            record = {
-                "id": f"{article_id}_{j}",
-                "title": title,
-                "content": t,
-                "contents": concat(title, t)
-            }
-
-            curr_text.append(json.dumps(record))
+        curr_text = [
+            json.dumps({
+                "id": '_'.join([article['id'], str(j)]),
+                "title": article['title'],
+                "content": re.sub(r"\s+", " ", t),
+                "contents": concat(article['title'], re.sub(r"\s+", " ", t))
+            })
+            for j, t in enumerate(texts)
+        ]
 
         saved_text.extend(curr_text)
 
+        # Save batch
         if (i + 1) % batch_size == 0:
+            output_file = os.path.join(
+                output_dir,
+                f"wiki20220301en{str(save_id).rjust(len_just, '0')}.jsonl"
+            )
 
-            with open(out_path, 'w', encoding="utf-8") as f:
+            with open(output_file, 'w') as f:
                 f.write('\n'.join(saved_text))
 
             saved_text = []
 
+    # Save remaining data
     if len(saved_text) > 0:
+        output_file = os.path.join(
+            output_dir,
+            f"wiki20220301en{str(save_id).rjust(len_just, '0')}.jsonl"
+        )
 
-        with open(out_path, 'w', encoding="utf-8") as f:
+        with open(output_file, 'w') as f:
             f.write('\n'.join(saved_text))
-
-    print("Wikipedia chunk generation complete.")

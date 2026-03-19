@@ -1,3 +1,4 @@
+
 import os
 import json
 from tqdm import tqdm
@@ -7,7 +8,6 @@ def break_json_objects(json_object):
     content = json_object["content"]
 
     half = len(content) // 2
-
     nearest_space = content.rfind(" ", 0, half)
     if nearest_space != -1:
         half = nearest_space
@@ -33,7 +33,6 @@ def break_json_objects(json_object):
 
 
 def merge_json_objects(queue):
-
     ids = [x["id"] for x in queue]
     contents = [x["content"] for x in queue]
 
@@ -46,25 +45,26 @@ def merge_json_objects(queue):
     }
 
     new_object["contents"] = new_object["title"] + ". " + new_content
-
     return new_object
 
 
 def process_dataset(dataset_name):
 
     input_folder = f"corpus/{dataset_name}/chunk"
+    output_root = "corpus/mog"
 
-    output_root = "corpus_mog"
+    half_path = os.path.join(output_root, f"{dataset_name}_half", "chunk")
+    single_path = os.path.join(output_root, f"{dataset_name}_1", "chunk")
+    double_path = os.path.join(output_root, f"{dataset_name}_2", "chunk")
+    quad_path = os.path.join(output_root, f"{dataset_name}_4", "chunk")
+    oct_path = os.path.join(output_root, f"{dataset_name}_8", "chunk")
 
-    half_path = os.path.join(output_root, f"{dataset_name}_half")
-    single_path = os.path.join(output_root, f"{dataset_name}_1")
-    double_path = os.path.join(output_root, f"{dataset_name}_2")
-    quad_path = os.path.join(output_root, f"{dataset_name}_4")
-    oct_path = os.path.join(output_root, f"{dataset_name}_8")
+    for path in [half_path, single_path, double_path, quad_path, oct_path]:
+        os.makedirs(path, exist_ok=True)
 
     jsonl_files = [f for f in os.listdir(input_folder) if f.endswith(".jsonl")]
 
-    for file in tqdm(jsonl_files, desc=f"Processing {dataset_name}"):
+    for file in tqdm(jsonl_files, desc=f"{dataset_name}: half & single"):
 
         file_path = os.path.join(input_folder, file)
 
@@ -72,74 +72,89 @@ def process_dataset(dataset_name):
         single_list = []
 
         with open(file_path, "r", encoding="utf-8") as f:
-
             for line in f:
-
-                obj = json.loads(line)
+                try:
+                    obj = json.loads(line)
+                except:
+                    continue
 
                 first, second = break_json_objects(obj)
 
-                half_list.append(first)
-                half_list.append(second)
+                single_obj = {
+                    "id": first["id"] + "|" + second["id"],
+                    "contents": obj["contents"],
+                    "title": obj["title"],
+                    "content": obj["content"],
+                }
 
-                single_list.append(obj)
+                half_list.extend([first, second])
+                single_list.append(single_obj)
 
-        # save half
         with open(os.path.join(half_path, file), "w", encoding="utf-8") as f:
             for i, obj in enumerate(half_list):
-                obj["id"] = str(i + 1) + "#" + obj["id"]
+                obj["id"] = f"{i+1}#{obj['id']}"
                 f.write(json.dumps(obj) + "\n")
 
-        # save single
         with open(os.path.join(single_path, file), "w", encoding="utf-8") as f:
             for i, obj in enumerate(single_list):
-                obj["id"] = str(i + 1) + "#" + obj["id"]
+                obj["id"] = f"{i+1}#{obj['id']}"
                 f.write(json.dumps(obj) + "\n")
 
-        double_q = []
-        quad_q = []
-        oct_q = []
+    for file in tqdm(jsonl_files, desc=f"{dataset_name}: 2/4/8"):
 
-        double_list = []
-        quad_list = []
-        oct_list = []
+        file_path = os.path.join(single_path, file)
 
-        for obj in single_list:
+        double_q, quad_q, oct_q = [], [], []
+        double_list, quad_list, oct_list = [], [], []
 
-            double_q.append(obj)
-            quad_q.append(obj)
-            oct_q.append(obj)
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                obj = json.loads(line)
 
-            if len(double_q) == 2:
-                double_list.append(merge_json_objects(double_q))
-                double_q = []
+                obj = {
+                    "id": obj["id"].split("#")[1],
+                    "contents": obj["contents"],
+                    "title": obj["title"],
+                    "content": obj["content"],
+                }
 
-            if len(quad_q) == 4:
-                quad_list.append(merge_json_objects(quad_q))
-                quad_q = []
+                double_q.append(obj)
+                quad_q.append(obj)
+                oct_q.append(obj)
 
-            if len(oct_q) == 8:
-                oct_list.append(merge_json_objects(oct_q))
-                oct_q = []
+                if len(double_q) == 2:
+                    double_list.append(merge_json_objects(double_q))
+                    double_q = []
 
-        with open(os.path.join(double_path, file), "w", encoding="utf-8") as f:
-            for i, obj in enumerate(double_list):
-                obj["id"] = str(i + 1) + "#" + obj["id"]
-                f.write(json.dumps(obj) + "\n")
+                if len(quad_q) == 4:
+                    quad_list.append(merge_json_objects(quad_q))
+                    quad_q = []
 
-        with open(os.path.join(quad_path, file), "w", encoding="utf-8") as f:
-            for i, obj in enumerate(quad_list):
-                obj["id"] = str(i + 1) + "#" + obj["id"]
-                f.write(json.dumps(obj) + "\n")
+                if len(oct_q) == 8:
+                    oct_list.append(merge_json_objects(oct_q))
+                    oct_q = []
 
-        with open(os.path.join(oct_path, file), "w", encoding="utf-8") as f:
-            for i, obj in enumerate(oct_list):
-                obj["id"] = str(i + 1) + "#" + obj["id"]
-                f.write(json.dumps(obj) + "\n")
+        if double_q:
+            double_list.append(merge_json_objects(double_q))
+        if quad_q:
+            quad_list.append(merge_json_objects(quad_q))
+        if oct_q:
+            oct_list.append(merge_json_objects(oct_q))
+
+        def write_file(path, data):
+            with open(path, "w", encoding="utf-8") as f:
+                for i, obj in enumerate(data):
+                    obj["id"] = f"{i+1}#{obj['id']}"
+                    f.write(json.dumps(obj) + "\n")
+
+        write_file(os.path.join(double_path, file), double_list)
+        write_file(os.path.join(quad_path, file), quad_list)
+        write_file(os.path.join(oct_path, file), oct_list)
 
 
 if __name__ == "__main__":
 
+    process_dataset("wikipedia")
     process_dataset("pubmed")
     process_dataset("statpearl")
 
