@@ -1,3 +1,5 @@
 corpus/
 corpus_mog/
 venv1/
+build_pubmed_corpus.py
+build_statpearls_corpus.py
