@@ -15,8 +15,9 @@ pyserini==0.21.0
 sentence-transformers==2.6.1
 
 # PyTorch (DO NOT install blindly here, see below)
-torch>=2.1,<2.3
-
+#torch>=2.1,<2.3 (uncomment for local use)
+tensorboard>=2.12
+wandb>=0.16
 # =========================
 # ML utilities
 # =========================
