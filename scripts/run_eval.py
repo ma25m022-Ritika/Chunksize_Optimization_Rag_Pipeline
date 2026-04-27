@@ -40,7 +40,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 ROUTER_CHECKPOINT = os.path.join(
     config["router_checkpoint_path"],
-    "best_model_fold_1.pt"
+    "best_model_fold_5.pt"
 )
 
 
