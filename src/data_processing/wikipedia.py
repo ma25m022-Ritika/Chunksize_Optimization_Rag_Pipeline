@@ -1,3 +1,6 @@
+import os
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
 
 import os
 import tqdm
@@ -38,7 +41,7 @@ if __name__ == "__main__":
     )
 
     # Output directory
-    output_dir = "corpus/wikipedia/chunk"
+    output_dir = os.path.join(BASE_DIR, "corpus", "wikipedia", "chunk")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 

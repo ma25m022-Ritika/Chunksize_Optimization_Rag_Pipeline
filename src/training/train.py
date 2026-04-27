@@ -32,10 +32,12 @@ import wandb
 LEVELS = ["half", "1", "2", "4", "8"]
 OUTPUT_DIM = len(LEVELS)
 
-DATA_FOLDER = "./soft_labels_top"
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parents[2]
+DATA_FOLDER = str(BASE_DIR / "medrag" / "soft_labels")
 
-LOG_DIR = "./runs/router_exp"
-CHECKPOINT_DIR = "./checkpoints"
+LOG_DIR = str(BASE_DIR / "logs" / "router_exp")
+CHECKPOINT_DIR = str(BASE_DIR / "checkpoints")
 
 BATCH_SIZE = 64
 EMBEDDING_BATCH_SIZE = 128

@@ -1,16 +1,19 @@
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+from pathlib import Path
 import json
 import os
 import random
 from typing import Dict, List
 
-from config import config
+from src.config import config
 
 LEVELS = ["half", "1", "2", "4", "8"]
 DATASETS = ["medmcqa", "bioasq", "pubmedqa", "medqa", "mmlu"]
 SIM_OPTION = "roberta"
 
-INPUT_DIR = os.path.join(config["medrag_path"], "retrieval_similarity_per_level")
-OUTPUT_DIR = os.path.join(config["medrag_path"], "soft_labels")
+INPUT_DIR = str((Path(BASE_DIR) / config["medrag_path"] / "retrieval_similarity_per_level").resolve())
+OUTPUT_DIR = str((Path(BASE_DIR) / config["medrag_path"] / "soft_labels").resolve())
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 

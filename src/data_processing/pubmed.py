@@ -1,4 +1,7 @@
 import os
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+import os
 import gzip
 import tqdm
 import json
@@ -44,16 +47,16 @@ def extract(gz_fpath):
     return titles, abstracts, ids
 
 if __name__ == "__main__":
-    fnames = sorted([fname for fname in os.listdir("corpus/pubmed/baseline") if fname.endswith("xml.gz")])
+    fnames = sorted([fname for fname in os.listdir(os.path.join(BASE_DIR, "corpus", "pubmed", "baseline")) if fname.endswith("xml.gz")])
     
-    if not os.path.exists("corpus/pubmed/chunk"):
-        os.makedirs("corpus/pubmed/chunk")
+    if not os.path.exists(os.path.join(BASE_DIR, "corpus", "pubmed", "chunk")):
+        os.makedirs(os.path.join(BASE_DIR, "corpus", "pubmed", "chunk"))
 
     for fname in tqdm.tqdm(fnames):
-        if os.path.exists("corpus/pubmed/chunk/{:s}".format(fname.replace(".xml.gz", ".jsonl"))):
+        if os.path.exists(os.path.join(BASE_DIR, "corpus", "pubmed", "chunk", "{:s}").format(fname.replace(".xml.gz", ".jsonl"))):
             continue
-        gz_fpath = os.path.join("corpus/pubmed/baseline", fname)
+        gz_fpath = os.path.join(BASE_DIR, "corpus", "pubmed", "baseline", fname)
         titles, abstracts, ids = extract(gz_fpath)
         saved_text = [json.dumps({"id": "PMID:"+str(ids[i]), "title": titles[i], "content": abstracts[i], "contents": concat(titles[i], abstracts[i])}) for i in range(len(titles))]
-        with open("corpus/pubmed/chunk/{:s}".format(fname.replace(".xml.gz", ".jsonl")), 'w') as f:
+        with open(os.path.join(BASE_DIR, "corpus", "pubmed", "chunk", "{:s}").format(fname.replace(".xml.gz", ".jsonl")), 'w') as f:
             f.write('\n'.join(saved_text))

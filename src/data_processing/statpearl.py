@@ -1,9 +1,12 @@
 import os
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+import os
 import json
 import tqdm
 
-input_folder = r"Corpus/statpearl/cleaned_articles"
-output_folder = r"corpus/statpearl/chunk"
+input_folder = os.path.join(BASE_DIR, "corpus", "statpearl", "cleaned_articles")
+output_folder = os.path.join(BASE_DIR, "corpus", "statpearl", "chunk")
 
 os.makedirs(output_folder, exist_ok=True)
 

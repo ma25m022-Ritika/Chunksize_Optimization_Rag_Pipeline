@@ -1,4 +1,7 @@
 import os
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+import os
 import json
 import argparse
 import subprocess
@@ -10,19 +13,19 @@ from pyserini.search.lucene import LuceneSearcher
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from config import config
+from src.config import config
 
 
-DB_MOE_DIR = Path(config["db_moe_dir"])
+DB_MOE_DIR = Path(BASE_DIR) / config["db_moe_dir"]
 CACHE_DIR = config["cache_dir"]
 MEDRAG_PATH = Path(config["medrag_path"])
 
 DATASET_PATHS = {
-    "medmcqa": config["medmcqa_path"],
-    "bioasq": config["bioasq_path"],
-    "pubmedqa": config["pubmedqa_path"],
-    "medqa": config["medqa_path"],
-    "mmlu": config["mmlu_path"],
+    "medmcqa": str(Path(BASE_DIR) / config["medmcqa_path"]),
+    "bioasq": str(Path(BASE_DIR) / config["bioasq_path"]),
+    "pubmedqa": str(Path(BASE_DIR) / config["pubmedqa_path"]),
+    "medqa": str(Path(BASE_DIR) / config["medqa_path"]),
+    "mmlu": str(Path(BASE_DIR) / config["mmlu_path"]),
 }
 
 TOP_K = 3

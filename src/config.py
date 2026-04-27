@@ -1,5 +1,5 @@
 root_path = "/home/charu-mittal/Chunksize_Optimization_Rag_Pipeline"
-corpus_path = "/home/charu-mittal/Chunksize_Optimization_Rag_Pipeline"
+corpus_path = f"{root_path}/corpus"
 model_path = "/home/charu-mittal/Chunksize_Optimization_Rag_Pipeline"
 
 config = {
@@ -19,8 +19,8 @@ config = {
     "cache_dir": f"{root_path}/pt_models",
 
     "db_dir": f"{corpus_path}/corpus",
-    "db_moe_dir": f"{corpus_path}/corpus_mog",
-    "db_graph_dir": f"{corpus_path}/corpus_mogg",
+    "db_moe_dir": f"{corpus_path}/corpus/mog",
+    "db_graph_dir": f"{corpus_path}/corpus/mogg",
 
     "benchmark_repo_dir": f"{root_path}/eval",
     "benchmark_dataset_json": f"{root_path}/qa_datasets_rawdata/eval_data.json",
@@ -35,9 +35,9 @@ config = {
     "medqa_path": f"{root_path}/qa_datasets_rawdata/medqa",
     "mmlu_path": f"{root_path}/qa_datasets_rawdata/mmlu",
 
-    "tensorboard_log_dir": f"{root_path}/tensorboard_logs/",
-    "router_checkpoint_path": f"{root_path}/router_checkpoint/",
-    "retrieval_result_path": f"{root_path}/retrieval_results/",
+    "tensorboard_log_dir": f"{root_path}/logs/router_exp/",
+    "router_checkpoint_path": f"{root_path}/checkpoints/",
+    "retrieval_result_path": f"{root_path}/retrieval_similarity_per_level/",
 
     "llama_tokenizer_path": f"{root_path}/llama3/tokenizer.model",
     "llama3_api_base": "***",

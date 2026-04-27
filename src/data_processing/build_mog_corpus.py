@@ -1,3 +1,6 @@
+import os
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
 
 import os
 import json
@@ -50,8 +53,8 @@ def merge_json_objects(queue):
 
 def process_dataset(dataset_name):
 
-    input_folder = f"corpus/{dataset_name}/chunk"
-    output_root = "corpus/mog"
+    input_folder = os.path.join(BASE_DIR, "corpus", dataset_name, "chunk")
+    output_root = os.path.join(BASE_DIR, "corpus", "mog")
 
     half_path = os.path.join(output_root, f"{dataset_name}_half", "chunk")
     single_path = os.path.join(output_root, f"{dataset_name}_1", "chunk")
