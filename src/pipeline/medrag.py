@@ -1,79 +1,110 @@
-from src.prompts.template import get_prompt
-import os
-import json
-from typing import List, Dict
-from rank_bm25 import BM25Okapi
+import torch
+import numpy as np
+
+from src.retrieval.retrieval_system import RetrievalSystem
+from src.models.router import Router
 
 
-class RetrievalSystem:
-    """
-    Simple BM25-based retrieval system.
+class MedRAG:
+    def __init__(
+        self,
+        rag: bool = True,
+        pred_with_router: bool = False,
+        router_model: Router = None,
+        llm_name: str = "llama3",
+        top_k: int = 3
+    ):
+        self.rag = rag
+        self.pred_with_router = pred_with_router
+        self.router = router_model
+        self.llm_name = llm_name
+        self.top_k = top_k
 
-    Loads corpus from JSONL files and retrieves top-k documents.
-    """
+        if self.rag:
+            self.retriever = RetrievalSystem()
 
-    def __init__(self, corpus_path: str):
-        self.corpus_path = corpus_path
-        self.documents = []
-        self.tokenized_corpus = []
-        self.bm25 = None
+    # =========================
+    # Dummy LLM (replace later)
+    # =========================
+    def generate(self, messages):
+        # Simple placeholder for now
+        return "Generated answer (LLM output)"
 
-        self._load_corpus()
-        self._build_index()
-
-    def _load_corpus(self):
+    # =========================
+    # Router scoring
+    # =========================
+    def route_query(self, query: str):
         """
-        Load all JSONL files from corpus directory
-        """
-        if not os.path.exists(self.corpus_path):
-            raise FileNotFoundError(f"Corpus path not found: {self.corpus_path}")
-
-        for root, _, files in os.walk(self.corpus_path):
-            for file in files:
-                if file.endswith(".jsonl"):
-                    file_path = os.path.join(root, file)
-
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        for line in f:
-                            try:
-                                obj = json.loads(line)
-                                self.documents.append(obj)
-                            except:
-                                continue
-
-        if len(self.documents) == 0:
-            raise ValueError("No documents loaded from corpus")
-
-    def _build_index(self):
-        """
-        Build BM25 index
-        """
-        self.tokenized_corpus = [
-            doc["contents"].lower().split() for doc in self.documents
-        ]
-
-        self.bm25 = BM25Okapi(self.tokenized_corpus)
-
-    def retrieve(self, query: str, top_k: int = 5) -> List[Dict]:
-        """
-        Retrieve top-k documents for a query
+        Converts query → embedding → router prediction
+        Currently using random vector (you must replace later)
         """
 
-        tokenized_query = query.lower().split()
+        # TODO: replace with SentenceTransformer
+        embedding = torch.randn(1024)
 
-        scores = self.bm25.get_scores(tokenized_query)
+        with torch.no_grad():
+            logits = self.router(embedding.unsqueeze(0))
+            probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
 
-        # Get top-k indices
-        top_indices = sorted(
-            range(len(scores)),
-            key=lambda i: scores[i],
-            reverse=True
-        )[:top_k]
+        return probs  # shape: [5]
 
-        results = []
-        for idx in top_indices:
-            doc = self.documents[idx].copy()
-            doc["bm25_score"] = float(scores[idx])
-            results.append(doc)
+    # =========================
+    # Core QA function
+    # =========================
+    def answer(self, question: str, options=None):
+        """
+        Returns:
+            answer_text
+            retrieved_docs
+            router_probs
+        """
 
-        return results
+        # ----------------------------------
+        # Case 1: CoT (no retrieval)
+        # ----------------------------------
+        if not self.rag:
+            prompt = f"Question: {question}\nAnswer:"
+            messages = [{"role": "user", "content": prompt}]
+            return self.generate(messages), [], None
+
+        # ----------------------------------
+        # Case 2: Retrieval
+        # ----------------------------------
+        retrieved_docs = self.retriever.retrieve(question, top_k=self.top_k)
+
+        # ----------------------------------
+        # Case 3: Router (MoG)
+        # ----------------------------------
+        router_probs = None
+
+        if self.pred_with_router and self.router is not None:
+            router_probs = self.route_query(question)
+
+            # NOTE:
+            # Currently NOT modifying retrieval based on router
+            # This is where real MoG logic should be applied
+
+        # ----------------------------------
+        # Build context
+        # ----------------------------------
+        context = "\n".join([
+            doc.get("contents", "") for doc in retrieved_docs
+        ])
+
+        prompt = f"""
+Use the following context to answer the question.
+
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:
+"""
+
+        messages = [{"role": "user", "content": prompt}]
+
+        answer = self.generate(messages)
+
+        return answer, retrieved_docs, router_probs
