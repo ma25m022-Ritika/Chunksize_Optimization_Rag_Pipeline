@@ -1,0 +1,92 @@
+corpus/
+corpus_mog/
+venv1/
+build_pubmed_corpus.py
+build_statpearls_corpus.py
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+build/
+dist/
+
+# =========================
+# Virtual Environment
+# =========================
+mog_env/
+venv/
+.env/
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Large ML / Data folders (VERY IMPORTANT)
+# =========================
+corpus_mog/
+retrieval_results/
+soft_labels/
+pt_models/
+
+# =========================
+# Indexes (Pyserini / Lucene)
+# =========================
+**/index/
+**/bm25/
+
+# =========================
+# Temporary / cache
+# =========================
+cache/
+*.cache
+
+# =========================
+# Outputs from your scripts
+# =========================
+retrieval_similarity_per_level/
+soft_labels_merged/
+
+# =========================
+# Dataset files (if large)
+# =========================
+qa_datasets_rawdata/
+
+# =========================
+# JSON outputs (optional)
+# =========================
+*.jsonl
+
+benchmark.json
+# =========================
+# Jupyter (if any)
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Misc
+# =========================
+*.zip
+*.tar
+*.gz
